@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tri-Med Home Care — AI Patient Visit Automation Proposal</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --ink: #0f1a14;
+    --ink2: #3a4a3f;
+    --ink3: #6b7d70;
+    --bg: #f8f5ef;
+    --bg2: #f0ebe0;
+    --bg3: #e8e1d4;
+    --accent: #1a6b3c;
+    --accent2: #2d8c56;
+    --accent-light: #e6f4ec;
+    --warn: #b45309;
+    --red: #991b1b;
+    --red-light: #fee2e2;
+    --blue: #1e40af;
+    --serif: 'DM Serif Display', Georgia, serif;
+    --sans: 'DM Sans', system-ui, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+  body { font-family: var(--sans); background: var(--bg); color: var(--ink); line-height: 1.6; }
+
+  /* Desktop centering: content sits left-of-center in a max-width shell */
+  .site-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0;
+  }
+
+  .cover {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 56px 72px 48px;
+    background: var(--ink);
+    color: var(--bg);
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -100px; right: -100px;
+    width: 460px; height: 460px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: -60px;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.04);
+  }
+  .cover-inner { position: relative; z-index: 1; }
+  .cover-tag {
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--accent2);
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 24px;
+  }
+  .cover-tag::before { content: ''; display: inline-block; width: 24px; height: 1px; background: var(--accent2); }
+  .cover-title {
+    font-family: var(--serif);
+    font-size: clamp(40px, 5.5vw, 66px);
+    line-height: 1.05; color: #fff;
+    max-width: 660px; margin-bottom: 16px;
+  }
+  .cover-title em { color: var(--accent2); font-style: italic; }
+  .cover-sub {
+    font-size: 15px; color: rgba(255,255,255,0.48);
+    max-width: 480px; font-weight: 300; line-height: 1.7;
+    margin-bottom: 36px;
+  }
+  .cover-divider { width: 100%; height: 1px; background: rgba(255,255,255,0.08); margin-bottom: 24px; }
+  .cover-meta { display: flex; gap: 40px; position: relative; z-index: 1; }
+  .cover-meta-item label {
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: rgba(255,255,255,0.28); display: block; margin-bottom: 3px;
+  }
+  .cover-meta-item span { font-size: 14px; color: rgba(255,255,255,0.7); font-weight: 500; }
+
+  .page { max-width: 860px; margin: 0 auto; padding: 40px 48px; }
+
+  /* Zoomable flow diagram container */
+  .flow-wrap {
+    background: #fff; border: 1px solid var(--bg3);
+    border-radius: 12px; padding: 24px 16px 18px; margin: 18px 0;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y pinch-zoom;
+  }
+  .flow-wrap svg {
+    min-width: 600px;
+    cursor: grab;
+  }
+
+  /* ── MOBILE ── */
+  @media (max-width: 680px) {
+    .cover { padding: 36px 24px 32px; min-height: auto; }
+    .cover-title { font-size: 34px; }
+    .cover-meta { flex-wrap: wrap; gap: 20px; }
+    .cover-meta-item { min-width: 40%; }
+
+    .page { padding: 28px 20px; }
+
+    h2 { font-size: 26px; }
+    h3 { font-size: 18px; }
+
+    .stat-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .stat-grid .stat-card { padding: 12px 6px; }
+    .stat-card .num { font-size: 26px; }
+    .stat-card .lbl { font-size: 10px; }
+    .stat-card .sub { font-size: 9px; }
+
+    .ps-grid { grid-template-columns: 1fr; }
+
+    .phases::before { display: none; }
+    .phases { flex-direction: column; gap: 0; margin: 12px 0; }
+    .phase {
+      display: grid !important;
+      grid-template-columns: 44px 1fr !important;
+      align-items: center;
+      column-gap: 16px;
+      text-align: left !important;
+      padding: 28px 0;
+      border-bottom: 1px solid var(--bg3);
+      flex: none;
+    }
+    .phase:last-child { border-bottom: none; }
+    .phase-dot {
+      margin: 0 !important;
+      width: 40px !important;
+      height: 40px !important;
+      font-size: 16px !important;
+      grid-column: 1;
+    }
+    .phase-text {
+      display: flex !important;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      grid-column: 2;
+    }
+    .phase-label { font-size: 13px; margin-bottom: 0; }
+    .phase-sub { font-size: 11px; text-align: right; line-height: 1.4; }
+
+    .pricing-grid { grid-template-columns: 1fr; }
+
+    .channel-grid { grid-template-columns: 1fr; }
+
+    .roi-grid { grid-template-columns: 1fr; }
+    .roi-grid .roi-item:last-child { grid-column: auto; }
+
+    .bar-row { flex-wrap: wrap; gap: 4px; align-items: center; margin-bottom: 12px; }
+    .bar-row label { width: 100%; min-width: 0; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 2px; }
+    .bar-row > div { flex: 1; min-width: 0; }
+    .bar-track { width: 100%; }
+    .bar-row .val { flex-shrink: 0; min-width: 52px; width: 52px; font-size: 11px; text-align: right; color: var(--accent); }
+    .bar-fill { font-size: 10px; padding-left: 6px; }
+
+    .footer { padding: 24px 20px; flex-direction: column; gap: 8px; text-align: center; }
+  }
+
+  .section-label {
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 10px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--bg3); }
+
+  h2 { font-family: var(--serif); font-size: 33px; line-height: 1.1; color: var(--ink); margin-bottom: 12px; }
+  h3 { font-family: var(--serif); font-size: 20px; color: var(--ink); margin-bottom: 8px; }
+  p { color: var(--ink2); margin-bottom: 12px; font-size: 15px; }
+  p:last-child { margin-bottom: 0; }
+
+  hr { border: none; border-top: 1px solid var(--bg3); margin: 32px 0; }
+
+  .callout {
+    background: var(--accent-light);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px; margin: 18px 0;
+  }
+  .callout p { color: var(--ink2); margin: 0; font-size: 14px; }
+  .callout strong { color: var(--accent); }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 18px 0; }
+  .stat-card {
+    background: #fff; border: 1px solid var(--bg3);
+    border-radius: 12px; padding: 18px 14px; text-align: center;
+  }
+  .stat-card .num { font-family: var(--serif); font-size: 36px; color: var(--accent); line-height: 1; margin-bottom: 4px; }
+  .stat-card .lbl { font-size: 12px; color: var(--ink3); font-weight: 500; }
+  .stat-card .sub { font-size: 11px; color: var(--ink3); margin-top: 2px; }
+
+  .ps-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 18px 0; }
+  .ps-card { border-radius: 12px; padding: 18px; }
+  .ps-card.problem { background: var(--red-light); }
+  .ps-card.solution { background: var(--accent-light); }
+  .ps-card .badge {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 20px; display: inline-block; margin-bottom: 10px;
+  }
+  .ps-card.problem .badge { background: var(--red); color: #fff; }
+  .ps-card.solution .badge { background: var(--accent); color: #fff; }
+  .ps-card ul { list-style: none; }
+  .ps-card ul li {
+    font-size: 13px; color: var(--ink2); padding: 3px 0;
+    display: flex; align-items: flex-start; gap: 7px;
+  }
+  .ps-card ul li::before {
+    content: ''; display: inline-block; width: 6px; height: 6px;
+    border-radius: 50%; margin-top: 6px; flex-shrink: 0;
+  }
+  .ps-card.problem ul li::before { background: var(--red); }
+  .ps-card.solution ul li::before { background: var(--accent); }
+
+  .flow-wrap {
+    background: #fff; border: 1px solid var(--bg3);
+    border-radius: 12px; padding: 24px 16px 18px; margin: 18px 0; overflow-x: auto;
+  }
+
+  /* PHASES */
+  .phases { display: flex; gap: 0; margin: 22px 0; position: relative; }
+  .phases::before {
+    content: ''; position: absolute;
+    top: 26px; left: 26px; right: 26px;
+    height: 2px; background: var(--bg3); z-index: 0;
+  }
+  .phase {
+    flex: 1; text-align: center; position: relative;
+    z-index: 1; padding: 0 8px; cursor: pointer;
+  }
+  .phase-dot {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: #fff; border: 2px solid var(--bg3);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 10px;
+    font-family: var(--serif); font-size: 19px; color: var(--ink3);
+    transition: all 0.22s ease;
+  }
+  .phase:hover .phase-dot,
+  .phase.active .phase-dot {
+    background: var(--accent); border-color: var(--accent); color: #fff;
+    transform: scale(1.08);
+    box-shadow: 0 4px 14px rgba(26,107,60,0.28);
+  }
+  .phase-label { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 2px; transition: color 0.2s; }
+  .phase:hover .phase-label, .phase.active .phase-label { color: var(--accent); }
+  .phase-sub { font-size: 11px; color: var(--ink3); line-height: 1.4; }
+  .phase-text { display: contents; }
+
+  .phase-detail {
+    display: none;
+    background: var(--accent-light);
+    border: 1px solid rgba(26,107,60,0.14);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 13.5px; color: var(--ink2); line-height: 1.55;
+    margin-top: 10px;
+  }
+  .phase-detail.visible { display: block; }
+
+  /* PRICING */
+  .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 18px 0; }
+  .pricing-card {
+    background: #fff; border: 1px solid var(--bg3);
+    border-radius: 13px; padding: 22px 18px;
+    position: relative; transition: transform 0.15s;
+  }
+  .pricing-card:hover { transform: translateY(-2px); }
+  .pricing-card.featured { border: 2px solid var(--accent); background: var(--ink); color: var(--bg); }
+  .pricing-card .tier {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--ink3); margin-bottom: 5px;
+  }
+  .pricing-card.featured .tier { color: var(--accent2); }
+  .pricing-card .price { font-family: var(--serif); font-size: 32px; color: var(--ink); line-height: 1; margin-bottom: 2px; }
+  .pricing-card.featured .price { color: #fff; }
+  .pricing-card .price-note { font-size: 12px; color: var(--ink3); margin-bottom: 16px; }
+  .pricing-card.featured .price-note { color: rgba(255,255,255,0.38); }
+  .pricing-card .feat-list { list-style: none; margin-bottom: 18px; }
+  .pricing-card .feat-list li {
+    font-size: 13px; padding: 4px 0;
+    border-bottom: 1px solid var(--bg3);
+    color: var(--ink2); display: flex; align-items: center; gap: 7px;
+  }
+  .pricing-card.featured .feat-list li { border-bottom-color: rgba(255,255,255,0.07); color: rgba(255,255,255,0.68); }
+  .pricing-card .feat-list li::before { content: '✓'; color: var(--accent2); font-weight: 600; font-size: 12px; flex-shrink: 0; }
+  .pricing-card.featured .feat-list li::before { color: var(--accent2); }
+  .pricing-card .feat-list li.no::before { content: '–'; color: var(--ink3); }
+  .pricing-card.featured .feat-list li.no::before { color: rgba(255,255,255,0.2); }
+  .pricing-card .cta {
+    display: block; text-align: center; padding: 9px 12px;
+    border-radius: 7px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+    background: var(--accent-light); color: var(--accent);
+    border: 1px solid rgba(26,107,60,0.18);
+  }
+  .pricing-card.featured .cta { background: var(--accent); color: #fff; border-color: transparent; }
+  .rec-badge {
+    position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
+    background: var(--accent); color: #fff;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 3px 14px; border-radius: 20px; white-space: nowrap;
+  }
+
+  .chart-wrap {
+    background: #fff; border: 1px solid var(--bg3);
+    border-radius: 12px; padding: 22px; margin: 18px 0;
+  }
+  .chart-label { font-size: 12px; font-weight: 600; color: var(--ink3); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 14px; }
+  .bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 9px; }
+  .bar-row label { font-size: 13px; color: var(--ink2); min-width: 158px; }
+  .bar-track { flex: 1; background: var(--bg2); border-radius: 4px; height: 26px; overflow: hidden; }
+  .bar-fill {
+    height: 100%; border-radius: 4px;
+    display: flex; align-items: center; padding-left: 10px;
+    font-size: 12px; font-weight: 600;
+  }
+  .bar-fill.before { background: var(--red); color: #fff; }
+  .bar-fill.after { background: var(--accent); color: #fff; }
+  .bar-row .val { font-size: 13px; font-weight: 600; min-width: 58px; text-align: right; }
+
+  .roi-box { background: var(--ink); border-radius: 13px; padding: 26px 32px; color: var(--bg); margin: 18px 0; text-align: center; }
+  .roi-box h3 { font-family: var(--serif); font-size: 22px; color: #fff; margin-bottom: 3px; }
+  .roi-box > p { color: rgba(255,255,255,0.42); font-size: 13px; margin-bottom: 18px; }
+  .roi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .roi-item .val { font-family: var(--serif); font-size: 28px; color: var(--accent2); line-height: 1; margin-bottom: 3px; }
+  .roi-item .lbl { font-size: 12px; color: rgba(255,255,255,0.42); }
+  .roi-divider { border-top: 1px solid rgba(255,255,255,0.09); margin: 18px 0; }
+  .roi-note { font-size: 13px; color: rgba(255,255,255,0.33); font-style: italic; margin: 0; }
+
+  .channel-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 18px 0; }
+  .channel-card { background: #fff; border: 1px solid var(--bg3); border-radius: 11px; padding: 16px; text-align: center; }
+  .channel-icon { width: 38px; height: 38px; border-radius: 9px; display: flex; align-items: center; justify-content: center; margin: 0 auto 9px; font-size: 17px; }
+  .channel-card h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .channel-card p { font-size: 12px; color: var(--ink3); margin: 0; }
+  .channel-card .channel-add { font-size: 11px; color: var(--accent); font-weight: 600; margin-top: 5px; display: block; }
+
+  .steps { margin: 18px 0; }
+  .step { display: flex; gap: 18px; margin-bottom: 18px; }
+  .step-num {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    font-family: var(--serif); font-size: 16px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .step-content h4 { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+  .step-content p { font-size: 13px; color: var(--ink3); margin: 0; }
+
+  .footer {
+    background: var(--ink); color: rgba(255,255,255,0.33);
+    padding: 28px 72px; font-size: 12px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .footer strong { color: rgba(255,255,255,0.62); }
+</style>
+</head>
+<body>
+<div class="site-wrap">
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-inner">
+    <div class="cover-tag">Prepared by Veriton Solutions</div>
+    <h1 class="cover-title">Automate Patient Care.<br/><em>Never Miss a Visit.</em></h1>
+    <p class="cover-sub">A phased AI automation system for scheduling, reminders, and post-hospitalization visit management — built specifically for Tri-Med Home Care.</p>
+    <div class="cover-divider"></div>
+  </div>
+  <div class="cover-meta">
+    <div class="cover-meta-item"><label>Prepared For</label><span>Dr. Vinod Sinha &mdash; Tri-Med Home Care</span></div>
+    <div class="cover-meta-item"><label>Date</label><span>May 2026</span></div>
+    <div class="cover-meta-item"><label>Document</label><span>Proposal v1.0</span></div>
+    <div class="cover-meta-item"><label>Prepared By</label><span>Veriton Solutions</span></div>
+  </div>
+</div>
+
+<!-- EXECUTIVE SUMMARY -->
+<div class="page">
+  <div class="section-label">Executive Summary</div>
+  <h2>The challenge you're solving</h2>
+  <p>For a home care organization managing 300+ patients, coordinating bi-annual nursing visits, tracking hospitalizations, and ensuring every patient receives timely reminders is an enormous manual burden. The cost isn't just staff hours — it's missed visits, lapsed care, and patient dissatisfaction.</p>
+  <p>This proposal outlines a practical, phased AI automation system that handles scheduling logic, multi-channel patient outreach, and post-hospitalization triggers automatically — so your care team can focus on care, not coordination.</p>
+  <div class="stat-grid">
+    <div class="stat-card"><div class="num">300</div><div class="lbl">Active Patients</div><div class="sub">Estimated baseline</div></div>
+    <div class="stat-card"><div class="num">600</div><div class="lbl">Visits / Year</div><div class="sub">Bi-annual schedule</div></div>
+    <div class="stat-card"><div class="num">~52</div><div class="lbl">Staff Hours Saved / Month</div><div class="sub">Coordination &amp; follow-up</div></div>
+  </div>
+  <div class="callout">
+    <p><strong>Bottom line:</strong> With 52 staff hours freed per month, automation pays for itself within the first month of full deployment. Every month after that is pure operational savings.</p>
+  </div>
+</div>
+
+<!-- PROBLEM / SOLUTION -->
+<div class="page" style="padding-top:0">
+  <hr/>
+  <div class="section-label">Problem &amp; Solution</div>
+  <h2>What's broken today</h2>
+  <div class="ps-grid">
+    <div class="ps-card problem">
+      <div class="badge">Current State</div>
+      <ul>
+        <li>Visit scheduling tracked manually in spreadsheets or paper records</li>
+        <li>No automated reminder system — staff must call patients individually</li>
+        <li>Hospitalization events tracked informally; post-discharge visits easily missed</li>
+        <li>No audit trail of when reminders were sent or who confirmed</li>
+        <li>Staff time consumed by coordination instead of care delivery</li>
+        <li>Patient no-shows due to forgotten or miscommunicated appointments</li>
+      </ul>
+    </div>
+    <div class="ps-card solution">
+      <div class="badge">With Automation</div>
+      <ul>
+        <li>Patient records centralized; next visit date auto-calculated and tracked</li>
+        <li>Multi-channel reminders (email, voice, SMS) sent automatically</li>
+        <li>Hospitalization flag triggers immediate post-discharge visit workflow</li>
+        <li>Full log of every reminder sent, confirmed, or failed</li>
+        <li>Coordinators spend their time on exceptions, not routine outreach</li>
+        <li>Patients reached on their preferred channel and language</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SYSTEM DESIGN -->
+<div class="page" style="padding-top:0">
+  <hr/>
+  <div class="section-label">System Design</div>
+  <h2>How the system works</h2>
+  <p>Three interconnected layers: patient data feeds into a scheduling engine which drives outreach channels and staff notification.</p>
+
+  <div class="flow-wrap">
+    <svg width="100%" viewBox="0 0 800 482" role="img" style="display:block;">
+      <title>Tri-Med Patient Visit Automation Flow</title>
+      <desc>Three-layer system diagram: patient data, scheduling engine, and outreach channels.</desc>
+      <defs>
+        <marker id="arrd" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+        <marker id="arrg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#1a6b3c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+        <marker id="arro" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#b45309" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+
+      <!-- LAYER 1 -->
+      <rect x="16" y="16" width="768" height="100" rx="10" fill="#f8f5ef" stroke="#e8e1d4" stroke-width="1"/>
+      <text x="30" y="34" font-family="'DM Sans',sans-serif" font-size="9" fill="#6b7d70" font-weight="600" letter-spacing="1.2">LAYER 1 — PATIENT DATA</text>
+
+      <rect x="36" y="42" width="200" height="58" rx="7" fill="#fff" stroke="#d1d5c8" stroke-width="0.8"/>
+      <text x="136" y="66" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="13" font-weight="500" fill="#0f1a14">Patient Records</text>
+      <text x="136" y="84" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="11" fill="#6b7d70">Name · Phone · Language · Last visit</text>
+
+      <rect x="300" y="42" width="200" height="58" rx="7" fill="#fef3c7" stroke="#f59e0b" stroke-width="0.8"/>
+      <text x="400" y="66" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="13" font-weight="500" fill="#0f1a14">Hospitalization Flag</text>
+      <text x="400" y="84" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="11" fill="#92400e">Staff marks patient admitted</text>
+
+      <rect x="564" y="42" width="200" height="58" rx="7" fill="#fff" stroke="#d1d5c8" stroke-width="0.8"/>
+      <text x="664" y="66" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="13" font-weight="500" fill="#0f1a14">Visit Schedule</text>
+      <text x="664" y="84" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="11" fill="#6b7d70">Auto-calculated due dates</text>
+
+      <!-- L1 → L2 vertical arrows -->
+      <line x1="136" y1="100" x2="136" y2="150" stroke="#9ca3af" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arrd)"/>
+      <line x1="400" y1="100" x2="400" y2="150" stroke="#b45309" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arro)"/>
+      <line x1="664" y1="100" x2="664" y2="150" stroke="#9ca3af" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arrd)"/>
+
+      <!-- LAYER 2 -->
+      <rect x="16" y="148" width="768" height="100" rx="10" fill="#e6f4ec" stroke="#a7d4b8" stroke-width="1"/>
+      <text x="30" y="166" font-family="'DM Sans',sans-serif" font-size="9" fill="#1a6b3c" font-weight="600" letter-spacing="1.2">LAYER 2 — SCHEDULING ENGINE (n8n AUTOMATION)</text>
+
+      <rect x="36" y="174" width="200" height="58" rx="7" fill="#fff" stroke="#a7d4b8" stroke-width="0.8"/>
+      <text x="136" y="198" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="13" font-weight="500" fill="#0f1a14">Daily Check</text>
+      <text x="136" y="216" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="11" fill="#3a4a3f">Who needs a visit soon?</text>
+
+      <rect x="300" y="174" width="200" height="58" rx="7" fill="#fff" stroke="#a7d4b8" stroke-width="0.8"/>
+      <text x="400" y="198" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="13" font-weight="500" fill="#0f1a14">Trigger Logic</text>
+      <text x="400" y="216" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="11" fill="#3a4a3f">Routine or post-discharge?</text>
+
+      <rect x="564" y="174" width="200" height="58" rx="7" fill="#fff" stroke="#a7d4b8" stroke-width="0.8"/>
+      <text x="664" y="198" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="13" font-weight="500" fill="#0f1a14">Assign &amp; Schedule</text>
+      <text x="664" y="216" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="11" fill="#3a4a3f">Nurse roster + time slot</text>
+
+      <!-- L2 horizontal arrows -->
+      <line x1="236" y1="203" x2="300" y2="203" stroke="#1a6b3c" stroke-width="1.2" marker-end="url(#arrg)"/>
+      <line x1="500" y1="203" x2="564" y2="203" stroke="#1a6b3c" stroke-width="1.2" marker-end="url(#arrg)"/>
+
+      <!-- L2 → L3: Assign down, then elbow left across to Layer 3 entry -->
+      <!-- Down from Assign & Schedule to junction point -->
+      <line x1="664" y1="232" x2="664" y2="268" stroke="#1a6b3c" stroke-width="1.2"/>
+      <!-- Horizontal across to x=56 at y=268 -->
+      <line x1="664" y1="268" x2="56" y2="268" stroke="#1a6b3c" stroke-width="1.2"/>
+      <!-- Down into Layer 3 -->
+      <line x1="56" y1="268" x2="56" y2="296" stroke="#1a6b3c" stroke-width="1.2" marker-end="url(#arrg)"/>
+
+      <!-- LAYER 3 -->
+      <rect x="16" y="294" width="768" height="172" rx="10" fill="#fff" stroke="#e8e1d4" stroke-width="1"/>
+      <text x="30" y="312" font-family="'DM Sans',sans-serif" font-size="9" fill="#6b7d70" font-weight="600" letter-spacing="1.2">LAYER 3 — PATIENT OUTREACH &amp; STAFF NOTIFICATION</text>
+
+      <!-- Email -->
+      <rect x="36" y="320" width="162" height="58" rx="7" fill="#dbeafe" stroke="#93c5fd" stroke-width="0.8"/>
+      <text x="117" y="344" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="13" font-weight="500" fill="#1e40af">Email Reminder</text>
+      <text x="117" y="362" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="11" fill="#1e40af">14 days · 7 days · 1 day</text>
+
+      <!-- Voice -->
+      <rect x="214" y="320" width="162" height="58" rx="7" fill="#e6f4ec" stroke="#86efac" stroke-width="0.8"/>
+      <text x="295" y="344" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="13" font-weight="500" fill="#1a6b3c">Voice Call</text>
+      <text x="295" y="362" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="11" fill="#1a6b3c">AI outbound + confirm</text>
+
+      <!-- SMS -->
+      <rect x="392" y="320" width="162" height="58" rx="7" fill="#fef3c7" stroke="#fcd34d" stroke-width="0.8"/>
+      <text x="473" y="344" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="13" font-weight="500" fill="#92400e">SMS</text>
+      <text x="473" y="362" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="11" fill="#92400e">Text reminder + confirm</text>
+
+      <!-- Staff Notification -->
+      <rect x="572" y="320" width="192" height="58" rx="7" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="0.8"/>
+      <text x="668" y="344" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="13" font-weight="500" fill="#4c1d95">Staff Notification</text>
+      <text x="668" y="362" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="11" fill="#4c1d95">Email alert + activity log</text>
+
+      <!-- Confirmation loop line (below all 4 boxes) -->
+      <line x1="117" y1="378" x2="117" y2="398" stroke="#9ca3af" stroke-width="0.7"/>
+      <line x1="117" y1="398" x2="668" y2="398" stroke="#9ca3af" stroke-width="0.7"/>
+      <line x1="668" y1="398" x2="668" y2="378" stroke="#9ca3af" stroke-width="0.7"/>
+      <text x="400" y="414" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="11" fill="#6b7d70">Patient confirms → logged automatically → staff dashboard updated</text>
+
+      <!-- Post-hospitalization banner — fully within layer 3, below confirmation text -->
+      <rect x="210" y="428" width="380" height="30" rx="7" fill="#fee2e2" stroke="#fca5a5" stroke-width="0.8"/>
+      <text x="400" y="448" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="11.5" font-weight="500" fill="#991b1b">⚡  Hospitalization flag → visit booked within 48 hrs post-discharge</text>
+    </svg>
+  </div>
+
+  <!-- DEPLOYMENT PHASES -->
+  <h3 style="margin-top:32px;">Deployment Phases</h3>
+  <div class="phases">
+    <div class="phase active" onclick="selectPhase(0)">
+      <div class="phase-dot">1</div>
+      <div class="phase-text"><div class="phase-label">Foundation</div><div class="phase-sub">Weeks 1–3<br/>Data + email</div></div>
+    </div>
+    <div class="phase" onclick="selectPhase(1)">
+      <div class="phase-dot">2</div>
+      <div class="phase-text"><div class="phase-label">Voice Layer</div><div class="phase-sub">Weeks 4–6<br/>AI outbound calls</div></div>
+    </div>
+    <div class="phase" onclick="selectPhase(2)">
+      <div class="phase-dot">3</div>
+      <div class="phase-text"><div class="phase-label">SMS + Dashboard</div><div class="phase-sub">Weeks 7–9<br/>SMS + monitoring</div></div>
+    </div>
+    <div class="phase" onclick="selectPhase(3)">
+      <div class="phase-dot">4</div>
+      <div class="phase-text"><div class="phase-label">Full Operation</div><div class="phase-sub">Week 10+<br/>Live &amp; optimized</div></div>
+    </div>
+  </div>
+  <div id="detail-0" class="phase-detail visible"><strong style="color:var(--accent)">Phase 1 — Foundation (Weeks 1–3):</strong> Patient database set up in Google Sheets, bi-annual scheduling logic configured, and automated email reminders activated at 14, 7, and 1 day before each visit. Hospitalization trigger workflow goes live. Staff email alerts enabled. This phase alone eliminates the majority of manual coordination work.</div>
+  <div id="detail-1" class="phase-detail"><strong style="color:var(--accent)">Phase 2 — Voice Layer (Weeks 4–6):</strong> AI outbound voice calls added on top of the email layer. Built on Retell AI with multilingual support — calls delivered in each patient's preferred language. Confirmation responses logged automatically. Call quality reviewed before Phase 3.</div>
+  <div id="detail-2" class="phase-detail"><strong style="color:var(--accent)">Phase 3 — SMS + Dashboard (Weeks 7–9):</strong> SMS reminders added as a third outreach channel. Live monitoring dashboard deployed — management can see confirmation rates, upcoming visits, and outstanding follow-ups in real time. Reporting configured to Tri-Med's preferences.</div>
+  <div id="detail-3" class="phase-detail"><strong style="color:var(--accent)">Phase 4 — Full Operation (Week 10+):</strong> System is fully live and self-running. Quarterly reviews optimize reminder timing and channel mix. Nurse schedule integration available. This is the steady state — your team monitors exceptions, the system handles the rest.</div>
+  <p style="font-size:13px; color:var(--ink3); margin-top:10px;">Phases 1–2 deliver the majority of operational value. Each phase is independently functional before the next begins.</p>
+</div>
+
+<!-- OUTREACH CHANNELS -->
+<div class="page" style="padding-top:0">
+  <hr/>
+  <div class="section-label">Outreach Channels</div>
+  <h2>How we reach your patients</h2>
+  <p>Every patient has a preferred way to be contacted. The system supports all three primary channels and can try them in sequence if one doesn't get a response.</p>
+  <div class="channel-grid">
+    <div class="channel-card">
+      <div class="channel-icon" style="background:#dbeafe;">📧</div>
+      <h4>Email</h4>
+      <p>Automated reminders at 14, 7, and 1 day before a scheduled visit. Includes visit details and a confirmation link.</p>
+      <span class="channel-add">Included in all tiers</span>
+    </div>
+    <div class="channel-card">
+      <div class="channel-icon" style="background:#e6f4ec;">📞</div>
+      <h4>AI Voice Call</h4>
+      <p>Outbound AI call in the patient's preferred language. Confirms the visit and logs the response automatically.</p>
+      <span class="channel-add">Standard &amp; Premium</span>
+    </div>
+    <div class="channel-card">
+      <div class="channel-icon" style="background:#fef3c7;">💬</div>
+      <h4>SMS</h4>
+      <p>Short text with visit details and a one-tap confirmation. Ideal for patients who don't check email regularly.</p>
+      <span class="channel-add">Premium tier</span>
+    </div>
+  </div>
+  <div class="callout">
+    <p><strong>Multilingual support:</strong> Calls and SMS are delivered in the patient's preferred language. Supported: English, Spanish, French, and others on request. Language preference is stored per patient and applied automatically.</p>
+  </div>
+</div>
+
+<!-- PRICING -->
+<div class="page" style="padding-top:0">
+  <hr/>
+  <div class="section-label">Investment</div>
+  <h2>Transparent, tiered pricing</h2>
+  <p>Choose the tier that fits your current needs. Upgrade at any time — infrastructure from earlier phases carries forward.</p>
+  <div class="pricing-grid">
+    <div class="pricing-card">
+      <div class="tier">Starter</div>
+      <div class="price">$690</div>
+      <div class="price-note">/ month + $1,495 setup</div>
+      <ul class="feat-list">
+        <li>Patient database setup</li>
+        <li>Bi-annual scheduling logic</li>
+        <li>Email reminders (3 touchpoints)</li>
+        <li>Hospitalization trigger workflow</li>
+        <li>Staff email notifications</li>
+        <li class="no">Voice call reminders</li>
+        <li class="no">SMS reminders</li>
+        <li class="no">Monitoring dashboard</li>
+      </ul>
+      <a href="#" class="cta">Get Started</a>
+    </div>
+    <div class="pricing-card" style="border-color:rgba(26,107,60,0.28);">
+      <div class="tier">Standard</div>
+      <div class="price">$1,150</div>
+      <div class="price-note">/ month + $2,300 setup</div>
+      <ul class="feat-list">
+        <li>Everything in Starter</li>
+        <li>AI voice call reminders</li>
+        <li>Call confirmation logging</li>
+        <li>Multilingual outreach</li>
+        <li>Monthly performance report</li>
+        <li>Priority support</li>
+        <li class="no">SMS reminders</li>
+        <li class="no">Custom dashboard</li>
+      </ul>
+      <a href="#" class="cta">Select Plan</a>
+    </div>
+    <div class="pricing-card featured">
+      <div class="rec-badge">Recommended</div>
+      <div class="tier">Premium</div>
+      <div class="price">$1,725</div>
+      <div class="price-note">/ month + $3,450 setup</div>
+      <ul class="feat-list">
+        <li>Everything in Standard</li>
+        <li>SMS reminders</li>
+        <li>Live monitoring dashboard</li>
+        <li>Custom reporting</li>
+        <li>Dedicated account manager</li>
+        <li>SLA-backed uptime guarantee</li>
+        <li>Quarterly system review</li>
+        <li>Nurse schedule integration</li>
+      </ul>
+      <a href="#" class="cta">Full Suite</a>
+    </div>
+  </div>
+  <p style="font-size:12px; color:var(--ink3); margin-top:8px;">All prices in USD. Setup fees one-time and non-recurring. Monthly pricing assumes up to 300 active patients. Voice call usage beyond 200 min/month billed at $0.12/min.</p>
+</div>
+
+<!-- ROI -->
+<div class="page" style="padding-top:0">
+  <hr/>
+  <div class="section-label">Return on Investment</div>
+  <h2>What you save</h2>
+  <p>The system replaces work that currently falls on your coordinators — outreach calls, confirmation tracking, follow-up scheduling — and does it faster, at scale, without error.</p>
+  <div class="chart-wrap">
+    <div class="chart-label">Monthly staff hours: manual vs. automated</div>
+    <div class="bar-row">
+      <label>Reminder calls</label>
+      <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+        <div class="bar-track"><div class="bar-fill before" style="width:82%">Before: 28 hrs</div></div>
+        <div class="bar-track"><div class="bar-fill after" style="width:6%">&nbsp;</div></div>
+      </div>
+      <span class="val" style="color:var(--accent)">→ 2 hrs</span>
+    </div>
+    <div class="bar-row">
+      <label>Confirmation tracking</label>
+      <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+        <div class="bar-track"><div class="bar-fill before" style="width:53%">Before: 18 hrs</div></div>
+        <div class="bar-track"><div class="bar-fill after" style="width:3%">&nbsp;</div></div>
+      </div>
+      <span class="val" style="color:var(--accent)">→ 1 hr</span>
+    </div>
+    <div class="bar-row">
+      <label>Hospitalization follow-ups</label>
+      <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+        <div class="bar-track"><div class="bar-fill before" style="width:32%">Before: 11 hrs</div></div>
+        <div class="bar-track"><div class="bar-fill after" style="width:4%">&nbsp;</div></div>
+      </div>
+      <span class="val" style="color:var(--accent)">→ 1.5 hrs</span>
+    </div>
+    <div class="bar-row">
+      <label>Schedule admin</label>
+      <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+        <div class="bar-track"><div class="bar-fill before" style="width:35%">Before: 12 hrs</div></div>
+        <div class="bar-track"><div class="bar-fill after" style="width:6%">&nbsp;</div></div>
+      </div>
+      <span class="val" style="color:var(--accent)">→ 2 hrs</span>
+    </div>
+    <div style="display:flex;gap:18px;margin-top:14px;font-size:12px;color:var(--ink3);">
+      <span style="display:flex;align-items:center;gap:5px;"><span style="width:11px;height:11px;border-radius:2px;background:var(--red);display:inline-block;"></span>Before automation</span>
+      <span style="display:flex;align-items:center;gap:5px;"><span style="width:11px;height:11px;border-radius:2px;background:var(--accent);display:inline-block;"></span>After automation</span>
+    </div>
+  </div>
+  <div class="roi-box">
+    <h3>Monthly savings breakdown</h3>
+    <p>Based on 300 active patients, bi-annual visit schedule</p>
+    <div class="roi-grid">
+      <div class="roi-item"><div class="val">~52 hrs</div><div class="lbl">Staff time freed per month</div></div>
+      <div class="roi-item"><div class="val">$1,140</div><div class="lbl">Labor savings per month</div></div>
+      <div class="roi-item"><div class="val">&lt;3 mo</div><div class="lbl">Payback period (Premium)</div></div>
+    </div>
+    <div class="roi-divider"></div>
+    <p class="roi-note">Direct labor savings only. Reduction in missed visits, improved patient satisfaction, and avoided compliance risk add further value that is harder to quantify but equally real.</p>
+  </div>
+</div>
+
+<!-- TO GET STARTED -->
+<div class="page" style="padding-top:0">
+  <hr/>
+  <div class="section-label">To Get Started</div>
+  <h2>What we need from Tri-Med</h2>
+  <p>We handle all technical setup. All we need from your team is the following, which can be provided in a simple spreadsheet:</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h4>Patient list</h4>
+        <p>Name, phone, email, preferred language, and approximate date of last nursing visit. All information handled in strict compliance with applicable privacy regulations.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h4>Nurse roster</h4>
+        <p>Names and general availability of visiting nurses. For Phase 1, a single dispatch contact is sufficient — full scheduling integration available in Premium.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h4>Hospitalization tracking process</h4>
+        <p>How your team currently logs when a patient is admitted. We integrate into your existing process — no new workflows required from clinical staff.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <h4>Reminder preferences</h4>
+        <p>How far in advance you'd like reminders sent. Default: 14 days, 7 days, and 1 day. Fully configurable to your preference.</p>
+      </div>
+    </div>
+  </div>
+  <div class="callout">
+    <p><strong>Typical onboarding:</strong> Phase 1 is live within 2–3 weeks of receiving the above. No disruption to care delivery operations during setup.</p>
+  </div>
+</div>
+
+<!-- NEXT STEPS -->
+<div class="page" style="padding-top:0">
+  <hr/>
+  <div class="section-label">Next Steps</div>
+  <h2>Ready to move forward?</h2>
+  <p>Start with a 30-minute working session to walk through this proposal, answer questions, and align on the right tier. We can have a signed agreement and onboarding kickoff within the same week.</p>
+  <div style="background:#fff;border:1px solid var(--bg3);border-radius:13px;padding:24px 28px;margin:18px 0;display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap;">
+    <div>
+      <div style="font-family:var(--serif);font-size:20px;color:var(--ink);margin-bottom:4px;">Veriton Solutions</div>
+      <div style="font-size:14px;color:var(--ink3);margin-bottom:3px;">AI Automation &amp; Voice Agent Services</div>
+      <div style="font-size:14px;color:var(--ink2);">cs@veriton.solutions</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:11px;color:var(--ink3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.08em;">Proposal Valid Until</div>
+      <div style="font-family:var(--serif);font-size:20px;color:var(--accent);">May 31, 2026</div>
+    </div>
+  </div>
+  <p style="font-size:12px;color:var(--ink3);text-align:center;margin-top:10px;">Confidential — prepared exclusively for Tri-Med Home Care. Pricing subject to formal agreement.</p>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div><strong>Veriton Solutions</strong> — AI Automation &amp; Voice Agent Services</div>
+  <div>Prepared May 2026 · Confidential · For Tri-Med Home Care</div>
+</div>
+
+</div><!-- /site-wrap -->
+
+<script>
+function selectPhase(idx) {
+  document.querySelectorAll('.phase').forEach(function(el, i) {
+    el.classList.toggle('active', i === idx);
+  });
+  [0,1,2,3].forEach(function(i) {
+    var d = document.getElementById('detail-' + i);
+    if (d) d.classList.toggle('visible', i === idx);
+  });
+}
+</script>
+</body>
+</html>
